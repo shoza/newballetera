@@ -1,0 +1,81 @@
+/* Diagraph ETC */
+@font-face {
+    font-family: 'Diagraph ETC';
+    src: url('DiagraphEtc-Hairline.otf') format('opentype');
+    font-weight: 100;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Diagraph ETC';
+    src: url('DiagraphEtc-Thin.otf') format('opentype');
+    font-weight: 200;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Diagraph ETC';
+    src: url('DiagraphEtc-ExtraLight.otf') format('opentype');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Diagraph ETC';
+    src: url('DiagraphEtc-Light.otf') format('opentype');
+    font-weight: 350;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Diagraph ETC';
+    src: url('DiagraphEtc-Book.otf') format('opentype');
+    font-weight: 380;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Diagraph ETC';
+    src: url('DiagraphEtc-Regular.otf') format('opentype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Diagraph ETC';
+    src: url('DiagraphEtc-Medium.otf') format('opentype');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Diagraph ETC';
+    src: url('DiagraphEtc-SemiBold.otf') format('opentype');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Diagraph ETC';
+    src: url('DiagraphEtc-Bold.otf') format('opentype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* DIN Condensed */
+@font-face {
+    font-family: 'DIN Condensed';
+    src: url('DIN Condensed Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}

@@ -1,0 +1,14 @@
+RewriteEngine On
+
+# -------------------------------------------------------
+# LOCAL (XAMPP): site runs at localhost/newballetera.com/
+#   RewriteBase /newballetera.com/
+#
+# PRODUCTION (GoDaddy root): site runs at newballetera.com/
+#   RewriteBase /
+# -------------------------------------------------------
+RewriteBase /newballetera.com/
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [QSA,L]
