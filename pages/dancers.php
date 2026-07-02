@@ -21,6 +21,7 @@ render_component('mobile-header');
         </div>
 
         <section class="submit-section">
+            <div class="separator" style="margin-bottom:40px;"></div>
             <div class="submit-section-text">
                 Selected dancers will have the opportunity to perform in original full-length ballets,
                 work with distinguished choreographers, participate in company classes led by established
@@ -51,8 +52,7 @@ render_component('mobile-header');
                 </div>
             </div>
 
-            <p class="app-fee">Application Fee: $25 — covers printing documents, judge compensation &amp; space rental
-            </p>
+            <p class="app-fee">Application Fee: $<?= stripe_fee_dollars() ?></p>
 
             <button class="fill-btn" id="toggle-form-btn" onclick="toggleForm()">Fill the Application</button>
 
@@ -62,6 +62,14 @@ render_component('mobile-header');
                     <h3>Application Received</h3>
                     <p>Thank you for applying to New Ballet Era.<br>We will review your application and be in touch
                         soon.</p>
+                </div>
+
+                <div id="payment-section" style="display:none;">
+                    <p class="form-step-title" style="margin-bottom:8px;">Final Step — Application Fee</p>
+                    <p class="payment-fee-label">$<?= stripe_fee_dollars() ?></p>
+                    <div id="payment-element"></div>
+                    <p id="payment-error" class="payment-error"></p>
+                    <button id="pay-btn" class="submit-form-btn" style="margin-top:24px;">Pay $<?= stripe_fee_dollars() ?> &amp; Submit</button>
                 </div>
 
                 <form id="dancer-form" enctype="multipart/form-data" onsubmit="submitDancerForm(event)">
@@ -82,31 +90,39 @@ render_component('mobile-header');
                     </div>
 
                     <p class="form-step-title">Step 1. Upload your headshot</p>
-                    <div class="upload-box">
-                        <input type="file" name="headshot" accept="image/*"
-                            onchange="showFilename(this,'headshot-name')">
+                    <label class="upload-box">
+                        <input type="file" name="headshot" accept="image/*" data-subdir="dancers/headshots"
+                            data-path-target="headshot_path" data-progress-id="headshot-progress"
+                            data-filename-id="headshot-name" data-preview-id="headshot-preview" onchange="handleFileUpload(this)">
                         <div class="upload-box-icon">↑</div>
                         <div class="upload-box-text">Click to upload (JPG, PNG — max 5 MB)</div>
-                    </div>
+                    </label>
+                    <div class="upload-preview" id="headshot-preview"></div>
                     <p class="upload-filename" id="headshot-name"></p>
+                    <p class="upload-filename" id="headshot-progress"></p>
 
                     <p class="form-step-title">Step 2. Upload your Dance Photos (up to 10)</p>
-                    <div class="upload-box">
-                        <input type="file" name="dance_photos[]" accept="image/*" multiple
-                            onchange="showFilename(this,'photos-name')">
+                    <label class="upload-box upload-box-shade">
+                        <input type="file" name="dance_photos[]" accept="image/*" multiple data-subdir="dancers/photos"
+                            data-path-target="dance_photos_paths[]" data-progress-id="photos-progress"
+                            data-filename-id="photos-name" data-preview-id="photos-preview" onchange="handleFileUpload(this)">
                         <div class="upload-box-icon">↑</div>
                         <div class="upload-box-text">Click to upload multiple photos (max 10)</div>
-                    </div>
+                    </label>
+                    <div class="upload-preview" id="photos-preview"></div>
                     <p class="upload-filename" id="photos-name"></p>
+                    <p class="upload-filename" id="photos-progress"></p>
 
                     <p class="form-step-title">Step 3. Upload your Résumé</p>
-                    <div class="upload-box">
-                        <input type="file" name="resume" accept=".pdf,.doc,.docx"
-                            onchange="showFilename(this,'resume-name')">
+                    <label class="upload-box">
+                        <input type="file" name="resume" accept=".pdf,.doc,.docx" data-subdir="dancers/resumes"
+                            data-path-target="resume_path" data-progress-id="resume-progress"
+                            data-filename-id="resume-name" onchange="handleFileUpload(this)">
                         <div class="upload-box-icon">↑</div>
                         <div class="upload-box-text">PDF or Word document (max 5 MB)</div>
-                    </div>
+                    </label>
                     <p class="upload-filename" id="resume-name"></p>
+                    <p class="upload-filename" id="resume-progress"></p>
 
                     <p class="form-step-title">Step 4. Three Video links demonstrating classical ballet technique and
                         performance ability</p>
@@ -126,7 +142,7 @@ render_component('mobile-header');
                     </div>
 
                     <p style="font-size:0.8rem;color:#aaa;margin-bottom:20px;">
-                        Step 5. Payment ($25 processing fee) — Stripe integration coming soon.
+                        Step 5. Pay the $<?= stripe_fee_dollars() ?> application fee to submit — you'll be prompted for payment after clicking Send Application.
                     </p>
 
                     <button type="submit" class="submit-form-btn">Send Application</button>
@@ -138,4 +154,8 @@ render_component('mobile-header');
     </main>
 </div>
 
-<?php render_component('footer', ['extra_js' => '<script src="' . BASE_URL . '/js/audition-form.js"></script>']); ?>
+<?php render_component('footer', [
+    'extra_js' =>
+        '<script src="https://js.stripe.com/v3/"></script>' .
+        '<script src="' . BASE_URL . '/js/audition-form.js?v=' . filemtime(__DIR__ . '/../js/audition-form.js') . '"></script>'
+]); ?>

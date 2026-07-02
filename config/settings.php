@@ -2,7 +2,7 @@
 // Site-wide configuration
 
 // Admin email: all application submissions are sent here
-define('ADMIN_EMAIL', 'yarikfarifonov@gmail.com');
+define('ADMIN_EMAIL', 'info@newballetera.com');
 
 // Site name (used in emails)
 define('SITE_NAME', 'New Ballet Era');

@@ -8,8 +8,12 @@ render_component('mobile-header');
 require_once __DIR__ . '/../config/database.php';
 $productions = [];
 if ($pdo) {
-    $stmt = $pdo->query("SELECT * FROM productions ORDER BY date ASC, id DESC");
-    $productions = $stmt->fetchAll();
+    try {
+        $stmt = $pdo->query("SELECT * FROM productions ORDER BY date ASC, id DESC");
+        $productions = $stmt->fetchAll();
+    } catch (\PDOException $e) {
+        error_log('Productions query failed: ' . $e->getMessage());
+    }
 }
 ?>
 
@@ -35,33 +39,14 @@ if ($pdo) {
                 <div style="display:flex;flex-direction:column;gap:50px;">
                     <?php foreach ($productions as $prod): ?>
                         <?php
-                        $slug = htmlspecialchars($prod['slug'] ?? '');
+                        $slug  = htmlspecialchars($prod['slug'] ?? '');
                         $title = htmlspecialchars($prod['title']);
-                        $date = $prod['date'] ? date('m.d.Y', strtotime($prod['date'])) : 'TBA';
-
-                        $gallery = [];
-                        if (!empty($prod['gallery_images'])) {
-                            $gallery = json_decode($prod['gallery_images'], true) ?: [];
-                        }
-                        $cells = 12;
+                        $date  = $prod['date'] ? date('m.d.Y', strtotime($prod['date'])) : 'TBA';
+                        $cover = !empty($prod['image_url']) ? BASE_URL . '/' . htmlspecialchars($prod['image_url']) : '';
                         ?>
                         <a href="<?= nav_url('/productions/' . $slug) ?>" class="production-card">
-                            <div class="production-card-inner"<?= !empty($prod['image_url']) && empty($gallery) ? ' style="background-image:url(\'' . BASE_URL . '/' . htmlspecialchars($prod['image_url']) . '\');background-size:cover;background-position:center;"' : '' ?>>
-                                <?php if (!empty($gallery)): ?>
-                                <div class="production-grid">
-                                    <?php for ($i = 0; $i < $cells; $i++):
-                                        $img = $gallery[$i] ?? null;
-                                        ?>
-                                        <div class="production-grid-cell placeholder">
-                                            <?php if ($img): ?>
-                                                <img src="<?= htmlspecialchars($img) ?>" alt="">
-                                            <?php endif; ?>
-                                        </div>
-                                    <?php endfor; ?>
-                                </div>
-                                <?php else: ?>
+                            <div class="production-card-inner"<?= $cover ? ' style="background-image:url(\'' . $cover . '\');background-size:cover;background-position:center;"' : '' ?>>
                                 <div style="aspect-ratio:16/9;"></div>
-                                <?php endif; ?>
                                 <div class="production-overlay">
                                     <div class="production-overlay-text"><?= $title ?></div>
                                 </div>

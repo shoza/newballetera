@@ -38,7 +38,7 @@ render_component('mobile-header');
                         <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
                     </svg>
                     <h3>For Choreographers</h3>
-                    <p>Create original works for New Ballet Era productions and artistic collaborations.</p>
+                    <p>Create original works for New Ballet Era productions.</p>
                     <span class="primary-btn" style="margin-top:8px;font-size:0.72rem;padding:10px 24px;">Apply
                         Now</span>
                 </a>

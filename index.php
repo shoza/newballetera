@@ -1,4 +1,8 @@
 <?php
+// ini_set('display_errors', 1);
+// ini_set('display_startup_errors', 1);
+// error_reporting(E_ALL);
+
 require_once __DIR__ . '/core/render.php';
 
 $base_path = dirname($_SERVER['SCRIPT_NAME']);
@@ -19,6 +23,10 @@ $GLOBALS['current_route'] = $request_uri;
 
 // BASE_URL: '' on GoDaddy root, '/newballetera.com' on XAMPP subfolder
 define('BASE_URL', $base_path);
+
+// Remember the last public page visited so the admin dashboard can offer a
+// "back to website" link that returns the admin to wherever they left off.
+setcookie('nbe_last_page', $_SERVER['REQUEST_URI'], time() + 86400, '/');
 
 // Handle /productions/{slug} → production detail page
 if (preg_match('#^productions/([a-z0-9\-]+)$#', $request_uri, $matches)) {

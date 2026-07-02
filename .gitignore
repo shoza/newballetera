@@ -1,0 +1,9 @@
+# Secrets — real credentials, never commit (see config/secrets.example.php)
+config/secrets.php
+
+# Applicant uploads (personal data)
+uploads/
+
+# OS cruft
+.DS_Store
+**/.DS_Store

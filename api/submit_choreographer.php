@@ -9,6 +9,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/settings.php';
+require_once __DIR__ . '/../config/stripe.php';
+require_once __DIR__ . '/../config/mail.php';
 
 $full_name          = trim($_POST['full_name'] ?? '');
 $email              = trim($_POST['email'] ?? '');
@@ -23,75 +25,87 @@ if (!$full_name || !$email || !$phone || !$video_link_1 || !$video_link_2 || !$v
     echo json_encode(['success' => false, 'message' => 'All required fields must be filled.']);
     exit;
 }
-
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     echo json_encode(['success' => false, 'message' => 'Invalid email address.']);
     exit;
 }
-
-function save_choreo_upload(string $field, string $filename_prefix): ?string
-{
-    if (empty($_FILES[$field]['tmp_name']) || $_FILES[$field]['error'] !== UPLOAD_ERR_OK) {
-        return null;
-    }
-    $allowed = array_merge(ALLOWED_DOC_TYPES, ALLOWED_IMG_TYPES);
-    $tmp  = $_FILES[$field]['tmp_name'];
-    $mime = mime_content_type($tmp);
-    if (!in_array($mime, $allowed, true)) return null;
-    if ($_FILES[$field]['size'] > MAX_DOC_SIZE) return null;
-
-    $ext  = pathinfo($_FILES[$field]['name'], PATHINFO_EXTENSION);
-    $name = $filename_prefix . '_' . uniqid('', true) . '.' . preg_replace('/[^a-z0-9]/i', '', $ext);
-    $dir  = UPLOAD_DIR . 'choreographers/';
-    if (!is_dir($dir)) mkdir($dir, 0755, true);
-    move_uploaded_file($tmp, $dir . $name);
-    return 'uploads/choreographers/' . $name;
+if (!preg_match('/^[\+]?[\d\s\-\(\)]{7,20}$/', $phone)) {
+    echo json_encode(['success' => false, 'message' => 'Invalid phone number.']);
+    exit;
+}
+if (count(array_unique([$video_link_1, $video_link_2, $video_link_3])) < 3) {
+    echo json_encode(['success' => false, 'message' => 'Please provide three different video links.']);
+    exit;
 }
 
-$resume_path       = save_choreo_upload('resume', 'resume');
-$cover_letter_path = save_choreo_upload('cover_letter', 'cover');
-$bio_path          = save_choreo_upload('bio', 'bio');
+$resume_path       = trim($_POST['resume_path']       ?? '') ?: null;
+$cover_letter_path = trim($_POST['cover_letter_path'] ?? '') ?: null;
+$bio_path          = trim($_POST['bio_path']          ?? '') ?: null;
 
+// Save application as pending
 try {
-    if (!$pdo) throw new Exception('Database connection failed.');
+    if (!$pdo) throw new Exception('No DB connection');
     $stmt = $pdo->prepare(
         "INSERT INTO choreographer_applications
             (full_name, email, phone, message, resume_path, cover_letter_path, bio_path,
-             video_link_1, video_link_2, video_link_3, artistic_statement)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+             video_link_1, video_link_2, video_link_3, artistic_statement, payment_status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')"
     );
     $stmt->execute([
         $full_name, $email, $phone, $message ?: null,
         $resume_path, $cover_letter_path, $bio_path,
         $video_link_1, $video_link_2, $video_link_3,
-        $artistic_statement ?: null
+        $artistic_statement ?: null,
     ]);
+    $app_id = (int)$pdo->lastInsertId();
 } catch (Exception $e) {
     echo json_encode(['success' => false, 'message' => 'Database error. Please try again.']);
     exit;
 }
 
-$subject = "New Choreographer Application — $full_name";
-$body    = "New choreographer application received.\n\n"
-         . "Name:    $full_name\n"
-         . "Email:   $email\n"
-         . "Phone:   $phone\n\n"
-         . "Message:\n$message\n\n"
-         . "Videos:\n  1. $video_link_1\n  2. $video_link_2\n  3. $video_link_3\n\n"
-         . "Artistic Statement:\n$artistic_statement\n\n"
-         . "Resume:       " . ($resume_path ?: 'not uploaded') . "\n"
-         . "Cover Letter: " . ($cover_letter_path ?: 'not uploaded') . "\n"
-         . "Bio:          " . ($bio_path ?: 'not uploaded') . "\n";
+// Create Stripe PaymentIntent
+if (!STRIPE_SK || STRIPE_SKIP_PAYMENT) {
+    $subject = "New Choreographer Application — $full_name";
+    $body    = "New choreographer application received.\n\n"
+             . "Name:  $full_name\nEmail: $email\nPhone: $phone\n\n"
+             . "Message:\n$message\n\n"
+             . "Videos:\n  1. $video_link_1\n  2. $video_link_2\n  3. $video_link_3\n\n"
+             . "Resume:       " . ($resume_path       ?: 'not uploaded') . "\n"
+             . "Cover Letter: " . ($cover_letter_path ?: 'not uploaded') . "\n";
+    send_mail(ADMIN_EMAIL,                $subject, $body, "$full_name <$email>");
+    send_mail('yarikfarifonov@gmail.com', $subject, $body, "$full_name <$email>");
 
-$headers = "From: " . SITE_NAME . " <noreply@newballetera.com>\r\n"
-         . "Reply-To: $full_name <$email>\r\n"
-         . "Content-Type: text/plain; charset=UTF-8\r\n";
+    $confirm = "Dear $full_name,\n\nThank you for applying to New Ballet Era. "
+             . "We have received your application and will review your materials. "
+             . "We will be in touch soon.\n\nWarm regards,\nNew Ballet Era";
+    send_mail($email, "Application Received — New Ballet Era", $confirm);
 
-@mail(ADMIN_EMAIL, $subject, $body, $headers);
+    echo json_encode(['success' => true, 'skip_payment' => true]);
+    exit;
+}
 
-$confirm_body = "Dear $full_name,\n\nThank you for your interest in choreographing for New Ballet Era. "
-    . "We have received your application and will be in touch after reviewing your materials.\n\n"
-    . "Warm regards,\nNew Ballet Era";
-@mail($email, "Application Received — New Ballet Era", $confirm_body, $headers);
+$pi = stripe_post('payment_intents', [
+    'amount'                         => STRIPE_AMOUNT,
+    'currency'                       => STRIPE_CURRENCY,
+    'payment_method_types[]'         => 'card',
+    'description'                    => 'New Ballet Era — Choreographer Application Fee',
+    'receipt_email'                  => $email,
+    'metadata[application_id]'       => $app_id,
+    'metadata[application_type]'     => 'choreo',
+    'metadata[applicant_name]'       => $full_name,
+]);
 
-echo json_encode(['success' => true, 'message' => 'Application submitted successfully.']);
+if (empty($pi['client_secret'])) {
+    error_log('Stripe PI error: ' . json_encode($pi));
+    echo json_encode(['success' => false, 'message' => 'Payment initialization failed. Please try again.']);
+    exit;
+}
+
+$pdo->prepare("UPDATE choreographer_applications SET stripe_pi_id = ? WHERE id = ?")
+    ->execute([$pi['id'], $app_id]);
+
+echo json_encode([
+    'success'        => true,
+    'client_secret'  => $pi['client_secret'],
+    'application_id' => $app_id,
+]);

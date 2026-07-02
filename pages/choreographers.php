@@ -14,17 +14,15 @@ render_component('mobile-header');
         <!-- Hero -->
         <div class="page-hero" style="background-image:url('<?= BASE_URL ?>/img/IMG_4527.jpeg');">
             <h2 class="page-hero-title">Auditions for Choreographers</h2>
-        </div>
-
-        <!-- Intro text -->
-        <div class="audition-intro">
             <p class="audition-intro-text">
                 New Ballet Era is seeking talented choreographers interested in creating original works
                 for future productions and artistic collaborations.
             </p>
         </div>
 
+
         <section class="submit-section">
+            <div class="separator" style="margin-bottom:40px;"></div>
             <div class="submit-section-text">
                 <p style="margin-bottom:14px;">
                     The company welcomes applications from emerging and established choreographers whose
@@ -50,7 +48,7 @@ render_component('mobile-header');
                 </div>
                 <div class="submit-icon-item">
                     <img src="<?= BASE_URL ?>/img/resume.png" alt="Cover Letter / Bio" class="submit-icon-img">
-                    <div class="submit-icon-label">Cover Letter or / and Biography</div>
+                    <div class="submit-icon-label">Cover Letter</div>
                 </div>
                 <div class="submit-icon-item">
                     <img src="<?= BASE_URL ?>/img/Video.png" alt="Video Links" class="submit-icon-img">
@@ -62,8 +60,7 @@ render_component('mobile-header');
                 </div>
             </div>
 
-            <p class="app-fee">Application Fee: $25 — covers printing documents, judge compensation &amp; space rental
-            </p>
+            <p class="app-fee">Application Fee: $<?= stripe_fee_dollars() ?></p>
 
             <button class="fill-btn" id="toggle-form-btn" onclick="toggleForm()">Fill the Application</button>
 
@@ -71,8 +68,15 @@ render_component('mobile-header');
             <div class="application-form-wrap" id="application-form">
                 <div id="form-success" class="form-success">
                     <h3>Application Received</h3>
-                    <p>Thank you for applying to New Ballet Era.<br>We will review your materials and be in touch soon.
-                    </p>
+                    <p>Thank you for applying to New Ballet Era.<br>We will review your materials and be in touch soon.</p>
+                </div>
+
+                <div id="payment-section" style="display:none;">
+                    <p class="form-step-title" style="margin-bottom:8px;">Final Step — Application Fee</p>
+                    <p class="payment-fee-label">$<?= stripe_fee_dollars() ?></p>
+                    <div id="payment-element"></div>
+                    <p id="payment-error" class="payment-error"></p>
+                    <button id="pay-btn" class="submit-form-btn" style="margin-top:24px;">Pay $<?= stripe_fee_dollars() ?> &amp; Submit</button>
                 </div>
 
                 <form id="choreo-form" enctype="multipart/form-data" onsubmit="submitChoreoForm(event)">
@@ -99,29 +103,26 @@ render_component('mobile-header');
                     </div>
 
                     <p class="form-step-title">Step 1. Upload your Résumé</p>
-                    <div class="upload-box">
-                        <input type="file" name="resume" accept=".pdf,.doc,.docx"
-                            onchange="showFilename(this,'resume-name')">
+                    <label class="upload-box">
+                        <input type="file" name="resume" accept=".pdf,.doc,.docx" data-subdir="choreographers"
+                            data-path-target="resume_path" data-progress-id="resume-progress"
+                            data-filename-id="resume-name" onchange="handleFileUpload(this)">
                         <div class="upload-box-icon">↑</div>
                         <div class="upload-box-text">PDF or Word document (max 5 MB)</div>
-                    </div>
+                    </label>
                     <p class="upload-filename" id="resume-name"></p>
+                    <p class="upload-filename" id="resume-progress"></p>
 
-                    <p class="form-step-title">Step 2. Upload your Cover Letter or Bio (or both)</p>
-                    <div class="upload-box">
-                        <input type="file" name="cover_letter" accept=".pdf,.doc,.docx"
-                            onchange="showFilename(this,'cover-name')">
+                    <p class="form-step-title">Step 2. Upload your Cover Letter</p>
+                    <label class="upload-box upload-box-shade">
+                        <input type="file" name="cover_letter" accept=".pdf,.doc,.docx" data-subdir="choreographers"
+                            data-path-target="cover_letter_path" data-progress-id="cover-progress"
+                            data-filename-id="cover-name" onchange="handleFileUpload(this)">
                         <div class="upload-box-icon">↑</div>
                         <div class="upload-box-text">Cover letter — PDF or Word (max 5 MB)</div>
-                    </div>
+                    </label>
                     <p class="upload-filename" id="cover-name"></p>
-                    <div class="upload-box">
-                        <input type="file" name="bio" accept=".pdf,.doc,.docx" onchange="showFilename(this,'bio-name')">
-                        <div class="upload-box-icon">↑</div>
-                        <div class="upload-box-text">Biography — PDF or Word (max 5 MB)</div>
-                    </div>
-                    <p class="upload-filename" id="bio-name"></p>
-
+                    <p class="upload-filename" id="cover-progress"></p>
                     <p class="form-step-title">Step 3. Three Video links of previous choreographic works (links must be
                         open)</p>
                     <div class="video-links-group">
@@ -138,15 +139,15 @@ render_component('mobile-header');
                             <input type="url" name="video_link_3" required placeholder="https://youtube.com/...">
                         </div>
                     </div>
-
+                    <!-- 
                     <p class="form-step-title">Step 4. Artistic Statement</p>
                     <div class="form-group">
                         <textarea name="artistic_statement" rows="6"
                             placeholder="Describe your choreographic vision and creative interests…"></textarea>
-                    </div>
+                    </div> -->
 
                     <p style="font-size:0.8rem;color:#aaa;margin-bottom:20px;">
-                        Step 5. Payment ($25 processing fee) — Stripe integration coming soon.
+                        Step 4. Pay the $<?= stripe_fee_dollars() ?> application fee to submit — you'll be prompted for payment after clicking Send Application.
                     </p>
 
                     <button type="submit" class="submit-form-btn">Send Application</button>
@@ -158,4 +159,7 @@ render_component('mobile-header');
     </main>
 </div>
 
-<?php render_component('footer', ['extra_js' => '<script src="' . BASE_URL . '/js/audition-form.js"></script>']); ?>
+<?php render_component('footer', ['extra_js' =>
+    '<script src="https://js.stripe.com/v3/"></script>' .
+    '<script src="' . BASE_URL . '/js/audition-form.js?v=' . filemtime(__DIR__ . '/../js/audition-form.js') . '"></script>'
+]); ?>
